@@ -29,7 +29,7 @@ export default function Upload() {
       }
 
       setLastCallTime(now);
-      const res = await fetch("http://localhost:8080/api/ai/analyze", {
+      const res = await fetch("https://optimandi.onrender.com/api/ai/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,7 +65,7 @@ export default function Upload() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://localhost:8080/api/upload", {
+      const res = await fetch("https://optimandi.onrender.com/api/upload", {
         method: "POST",
         body: formData,
       });

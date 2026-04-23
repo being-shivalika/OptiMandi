@@ -6,7 +6,7 @@ export default function RawTest() {
 
   const handleAnalyze = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/ai/analyze", {
+      const res = await fetch("https://optimandi.onrender.com/api/ai/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

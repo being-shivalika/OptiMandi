@@ -31,7 +31,7 @@ export const DataProvider = ({ children }) => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("http://localhost:8080/api/upload", {
+      const res = await fetch("https://optimandi.onrender.com/api/upload", {
         method: "POST",
         body: formData,
       });
