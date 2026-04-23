@@ -23,7 +23,7 @@ const Signup = () => {
 
       // Use template literals to avoid double-slash errors
       const { data } = await axios.post(
-        `https://opti-mandi.vercel.app/api/auth/register`,
+        `https://optimandi.onrender.com/api/auth/register`,
         {
           name,
           email,
