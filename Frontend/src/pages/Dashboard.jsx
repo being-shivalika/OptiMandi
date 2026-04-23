@@ -14,7 +14,7 @@ const Dashboard = () => {
   // ✅ FETCH USER ON LOAD
   useEffect(() => {
     getUserData();
-  }, []);
+  }, [getUserData]);
 
   return (
     <Layout title="Dashboard">
