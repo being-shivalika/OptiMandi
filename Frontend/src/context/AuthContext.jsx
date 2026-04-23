@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 export const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  const backendURL = import.meta.env.VITE_BACKEND_URL;
+  const backendURL = "https://optimandi.onrender.com";
 
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserData] = useState(null);
