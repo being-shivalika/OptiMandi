@@ -1,11 +1,16 @@
+import User from "../models/user.js";
+
 export const getUserData = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id || req.user.userId;
 
-    const user = await userModel.findById(userId);
+    const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
     }
 
     res.status(200).json({
@@ -18,7 +23,10 @@ export const getUserData = async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    res.status(500).json({
+      success: false,
+      message: "Server Error"
+    });
   }
 };
 

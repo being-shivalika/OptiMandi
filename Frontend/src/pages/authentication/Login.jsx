@@ -23,9 +23,16 @@ const Login = () => {
       });
 
       if (data.success) {
+        // 🔥 THIS WAS MISSING
+        localStorage.setItem("token", data.token);
+
         setIsLoggedin(true);
-        getUserData();
+
+        // 🔥 now this will work correctly
+        await getUserData();
+
         toast.success("Welcome back!");
+
         navigate("/dashboard");
       } else {
         toast.error(data.message);

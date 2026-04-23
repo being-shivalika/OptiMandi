@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataContext } from "../context/DataContext";
 import { AuthContext } from "../context/AuthContext";
@@ -7,9 +7,14 @@ import MarketSnap from "../components/Main/MarketSnap";
 
 const Dashboard = () => {
   const { data } = useContext(DataContext);
-  const { userData } = useContext(AuthContext);
+  const { userData, getUserData } = useContext(AuthContext);
   const isEmpty = !data;
   const navigate = useNavigate();
+
+  // ✅ FETCH USER ON LOAD
+  useEffect(() => {
+    getUserData();
+  }, []);
 
   return (
     <Layout title="Dashboard">
@@ -26,7 +31,7 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* ================= STATE 1: EMPTY (NO DATA) ================= */}
+        {/* ================= STATE 1: EMPTY ================= */}
         {isEmpty && (
           <div className="flex flex-col items-center justify-center min-h-[50vh] text-center animate-fade-in">
             <div className="w-24 h-24 bg-[#112B24] rounded-2xl flex items-center justify-center mb-6 rotate-3 border border-green-900/30">
@@ -54,10 +59,8 @@ const Dashboard = () => {
         {/* ================= STATE 2: DATA AVAILABLE ================= */}
         {!isEmpty && (
           <div className="space-y-8 animate-fade-in">
-            {/* 1. Use your existing MarketSnap component */}
             <MarketSnap />
 
-            {/* 2. Price Trend Section */}
             <section className="bg-[#112B24] p-6 rounded-2xl border border-green-900/20">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-white">
@@ -74,9 +77,7 @@ const Dashboard = () => {
               </div>
             </section>
 
-            {/* 3. AI Insights & Actions Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* AI Insight Card */}
               <div className="bg-[#112B24] p-6 rounded-2xl border-l-4 border-blue-500">
                 <h3 className="text-md font-bold text-blue-400 mb-3 uppercase tracking-tight">
                   <i className="fa-solid fa-wand-magic-sparkles mr-2"></i>
@@ -88,7 +89,6 @@ const Dashboard = () => {
                 </p>
               </div>
 
-              {/* Quick Actions Card */}
               <div className="bg-[#112B24] p-6 rounded-2xl border-l-4 border-orange-500">
                 <h3 className="text-md font-bold text-orange-400 mb-4 uppercase tracking-tight">
                   <i className="fa-solid fa-bolt mr-2"></i>
@@ -119,4 +119,5 @@ const Dashboard = () => {
     </Layout>
   );
 };
+
 export default Dashboard;
