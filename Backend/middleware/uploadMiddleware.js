@@ -6,15 +6,19 @@ const storage = multer.memoryStorage();
 // Optional: file validation (CSV only)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
-    "text/csv",
-    "application/vnd.ms-excel",
-  ];
+  "text/csv",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/pdf"
+];
 
-  const isCSV =
+  const isAllowed = 
     allowedTypes.includes(file.mimetype) ||
-    file.originalname.toLowerCase().endsWith(".csv");
+    file.originalname.toLowerCase().endsWith(".csv") ||
+    file.originalname.toLowerCase().endsWith(".xlsx") ||
+    file.originalname.toLowerCase().endsWith(".pdf");
 
-  if (isCSV) {
+  if (isAllowed) {
     cb(null, true);
   } else {
     cb(new Error("Only CSV files are allowed"), false);

@@ -75,7 +75,7 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="/dashboard">
+            <a href="/login">
               <button className="bg-[#E67E22] hover:bg-[#e67d22ad] px-5 py-2 md:px-6 md:py-3 rounded-lg text-sm">
                 Start Tracking
               </button>

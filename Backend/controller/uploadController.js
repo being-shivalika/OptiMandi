@@ -1,9 +1,10 @@
 import { parseCSV } from "../utils/parseCSV.js";
+import { parseExcel } from "../utils/parseExcel.js";
+import { parsePDF } from "../utils/parsePDF.js";
 import { generateInsights } from "../services/geminiService.js";
 
 export const handleUpload = async (req, res) => {
   try {
-    // 🔹 1. VALIDATE FILE
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -11,21 +12,36 @@ export const handleUpload = async (req, res) => {
       });
     }
 
-    // 🔹 2. PARSE CSV → JSON
-    const parsedData = await parseCSV(req.file.buffer);
+    let parsedData = [];
 
-    // Optional: basic validation
-    if (!parsedData || parsedData.length === 0) {
+    const fileType = req.file.mimetype;
+
+    // 🔥 SWITCH BASED ON FILE TYPE
+    if (fileType.includes("csv")) {
+      parsedData = await parseCSV(req.file.buffer);
+    } 
+    else if (fileType.includes("excel") || fileType.includes("spreadsheet")) {
+      parsedData = await parseExcel(req.file.buffer);
+    } 
+    else if (fileType.includes("pdf")) {
+      parsedData = await parsePDF(req.file.buffer);
+    } 
+    else {
       return res.status(400).json({
         success: false,
-        message: "CSV is empty or invalid",
+        message: "Unsupported file type",
       });
     }
 
-    // 🔹 3. SEND DATA TO GEMINI
+    if (!parsedData.length) {
+      return res.status(400).json({
+        success: false,
+        message: "File parsed but no usable data",
+      });
+    }
+
     const aiResponse = await generateInsights(parsedData);
 
-    // 🔹 4. RETURN CLEAN RESPONSE
     return res.status(200).json({
       success: true,
       data: aiResponse,

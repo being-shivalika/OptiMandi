@@ -5,21 +5,26 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// ================= RATE CONTROL =================
 let lastCallTime = 0;
 
-const canCallAI = () => {
-  const now = Date.now();
-
-  if (now - lastCallTime < 5000) {
-    throw new Error("Rate limit: Too many AI requests");
-  }
-
-  lastCallTime = now;
-};
-const cache = new Map();
-// 🔥 retry helper
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const waitIfNeeded = async () => {
+  const now = Date.now();
+  const diff = now - lastCallTime;
+
+  if (diff < 5000) {
+    await sleep(5000 - diff);
+  }
+
+  lastCallTime = Date.now();
+};
+
+// ================= CACHE =================
+const cache = new Map();
+
+// ================= RETRY =================
 const callWithRetry = async (fn, retries = 3) => {
   let lastError;
 
@@ -41,35 +46,94 @@ const callWithRetry = async (fn, retries = 3) => {
   throw lastError;
 };
 
+// ================= MAIN ANALYSIS =================
 export const generateInsights = async (data) => {
   try {
-        canCallAI(); // ✅ ADD HERE
-
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error("Missing GEMINI_API_KEY");
-    }
+    await waitIfNeeded();
 
     if (!Array.isArray(data) || data.length === 0) {
-      throw new Error("Invalid or empty dataset");
+      throw new Error("Invalid dataset");
     }
 
-    // 🔥 CLEAN DATA (CRITICAL FIX)
+    // ✅ CLEAN DATA (SAFE)
     const cleanData = data
-      .filter(
-        (row) =>
-          row &&
-          row.date &&
-          row.commodity &&
-          row.arrival > 0 &&
-          row.price > 0
-      )
+      .map((row) => ({
+        date: row.date || "unknown",
+        commodity: row.commodity || "unknown",
+        mandi: row.mandi || "default", // ✅ FIXED
+        arrival: Number(row.arrival) || 0,
+        price: Number(row.price) || 0,
+      }))
+      .filter((row) => row.arrival !== 0 || row.price !== 0)
       .slice(0, 100);
 
+    console.log("CLEAN DATA LENGTH:", cleanData.length);
+
+    // 🚨 HARD FALLBACK
     if (cleanData.length === 0) {
-      throw new Error("No valid rows after cleaning");
+      return {
+        report: {
+          trend: "unknown",
+          risk: "HIGH",
+          summary: "No usable market data found",
+        },
+        prediction: {
+          direction: "STABLE",
+          confidence: 0,
+        },
+        tasks: ["Upload valid mandi data"],
+        farmer_advisory: ["Verify dataset before relying"],
+      };
     }
 
-    // 🔥 BASIC STATS (VERY IMPORTANT)
+    // ================= CACHE =================
+    const cacheKey = JSON.stringify(cleanData).slice(0, 300);
+
+    if (cache.has(cacheKey)) {
+      console.log("⚡ Using cached AI response");
+      return cache.get(cacheKey);
+    }
+
+    // ================= MANDI ANALYSIS =================
+    const mandiStats = {};
+
+    cleanData.forEach((row) => {
+      const mandiKey = row.mandi || "default";
+
+      if (!mandiStats[mandiKey]) {
+        mandiStats[mandiKey] = {
+          totalArrival: 0,
+          totalPrice: 0,
+          count: 0,
+        };
+      }
+
+      mandiStats[mandiKey].totalArrival += row.arrival;
+      mandiStats[mandiKey].totalPrice += row.price;
+      mandiStats[mandiKey].count++;
+    });
+
+    Object.keys(mandiStats).forEach((m) => {
+      mandiStats[m].avgPrice =
+        mandiStats[m].totalPrice / mandiStats[m].count;
+    });
+
+    const mandiList = Object.entries(mandiStats);
+
+    const sorted = mandiList.sort(
+      (a, b) => a[1].avgPrice - b[1].avgPrice
+    );
+
+    const oversupplyMarket = sorted[0];
+    const highDemandMarket = sorted[sorted.length - 1];
+
+    // ✅ FIXED (was const reassignment bug)
+    let redistributionHint = `
+Oversupply Market: ${oversupplyMarket?.[0] || "N/A"}
+High Demand Market: ${highDemandMarket?.[0] || "N/A"}
+`;
+
+    // ================= BASIC LOGIC =================
     const prices = cleanData.map((r) => r.price);
     const arrivals = cleanData.map((r) => r.arrival);
 
@@ -79,105 +143,119 @@ export const generateInsights = async (data) => {
     const avgArrival =
       arrivals.reduce((a, b) => a + b, 0) / arrivals.length;
 
-    const latest = cleanData[cleanData.length - 1];
-
-    const summaryStats = {
-      avgPrice,
-      avgArrival,
-      latestPrice: latest.price,
-      latestArrival: latest.arrival,
-      totalRecords: cleanData.length,
+    const latest = cleanData.at(-1) || {
+      price: avgPrice,
+      arrival: avgArrival,
+      commodity: "commodity",
     };
-    if (cleanData.length < 5) {
-  return {
-    report: {
-      trend: "unknown",
-      risk: "HIGH",
-      summary: "Not enough valid market data"
-    },
-    prediction: {
-      direction: "STABLE",
-      confidence: 0
-    },
-    tasks: ["Upload better dataset"],
-    farmer_advisory: ["Do not rely on weak data"]
-  };
-}
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
+    // ✅ SAFE DIVISION
+    const safeAvgArrival = avgArrival || 1;
+    const safeAvgPrice = avgPrice || 1;
 
-    const prompt = `
-You are a strict agricultural market intelligence system.
+    const arrivalChange =
+      (latest.arrival - safeAvgArrival) / safeAvgArrival;
 
-You MUST analyze the dataset and NEVER refuse.
+    const priceChange =
+      (latest.price - safeAvgPrice) / safeAvgPrice;
 
-LOGIC RULES:
-- Rising arrivals + falling prices → OVERSUPPLY → HIGH RISK
-- Falling arrivals + rising prices → SHORTAGE → OPPORTUNITY
-- Stable values → LOW RISK
-- Mixed → MEDIUM RISK
+    let trend = "stable";
+    let risk = "MEDIUM";
+    let direction = "STABLE";
 
-You MUST:
-- infer patterns even if data is limited
-- NEVER say "no data" or "insufficient data"
-- reduce confidence if uncertain
+    if (arrivalChange > 0.25 && priceChange < -0.1) {
+      trend = "decreasing";
+      risk = "HIGH";
+      direction = "DOWN";
+    } else if (arrivalChange < -0.25 && priceChange > 0.1) {
+      trend = "increasing";
+      risk = "LOW";
+      direction = "UP";
+    } else if (
+      Math.abs(arrivalChange) > 0.2 ||
+      Math.abs(priceChange) > 0.2
+    ) {
+      trend = "mixed";
+      risk = "MEDIUM";
+      direction = "MIXED";
+    }
 
-DATA SUMMARY:
-${JSON.stringify(summaryStats)}
+    const systemInsight =
+      direction === "DOWN"
+        ? `High supply of ${latest.commodity} — redistribute to better markets`
+        : direction === "UP"
+        ? `Low supply — strong selling opportunity`
+        : `Market unstable — wait before large decisions`;
 
-RAW DATA:
-${JSON.stringify(cleanData)}
+    const baseResponse = {
+      report: {
+        trend,
+        risk,
+        summary: `Avg price ₹${avgPrice.toFixed(
+          2
+        )}, current ₹${latest.price}.
+Avg arrivals ${avgArrival}, current ${latest.arrival}.
+${systemInsight}`,
+      },
+      prediction: {
+        direction,
+        confidence: 0.6,
+      },
+      tasks: [
+        direction === "UP"
+          ? `Sell ${latest.commodity} in ${
+              highDemandMarket?.[0] || "high-demand markets"
+            }`
+          : direction === "DOWN"
+          ? `Avoid selling ${latest.commodity} locally — move to better markets`
+          : `Wait and monitor ${latest.commodity} for 2-3 days`,
+      ],
+      farmer_advisory: [
+        "Track arrivals daily before making decisions",
+      ],
+    };
 
-RETURN STRICT JSON ONLY:
+    // ================= AI IMPROVEMENT =================
+    try {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+      });
 
-{
-  "report": {
-    "trend": "increasing | decreasing | stable | mixed",
-    "risk": "LOW | MEDIUM | HIGH",
-    "summary": "clear explanation using data"
-  },
-  "prediction": {
-    "direction": "UP | DOWN | STABLE | MIXED",
-    "confidence": number (0 to 1)
-  },
-  "tasks": [
-    "specific actionable step",
-    "specific actionable step"
-  ],
-  "farmer_advisory": [
-    "practical step to reduce crop loss"
-  ]
-}
+      const prompt = `
+Refine this agricultural market analysis.
+Keep it realistic, practical, and short.
+
+${JSON.stringify(baseResponse)}
+
+Context:
+${redistributionHint}
+
+Return only improved summary text.
 `;
 
-    const result = await callWithRetry(() =>
-      model.generateContent(prompt)
-    );
+      const result = await callWithRetry(() =>
+        model.generateContent(prompt)
+      );
 
-    let text = result.response.text();
+      const text = result.response.text();
 
-    if (!text) {
-      throw new Error("Empty response from AI");
+      const finalResponse = {
+        ...baseResponse,
+        report: {
+          ...baseResponse.report,
+          summary: text
+            ? text.split(".").slice(0, 2).join(".") + "."
+            : baseResponse.report.summary,
+        },
+      };
+
+      cache.set(cacheKey, finalResponse);
+
+      return finalResponse;
+    } catch {
+      cache.set(cacheKey, baseResponse);
+      return baseResponse;
     }
-
-    // 🔥 CLEAN RESPONSE
-    text = text
-      .replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim();
-
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
-
-    if (start === -1 || end === -1) {
-      throw new Error("Invalid JSON structure");
-    }
-
-    const jsonString = text.slice(start, end + 1);
-
-    return JSON.parse(jsonString);
 
   } catch (error) {
     console.error("Gemini Service Error:", error.message);
@@ -187,121 +265,66 @@ RETURN STRICT JSON ONLY:
         trend: "unknown",
         risk: "MEDIUM",
         summary:
-          "AI failed due to invalid dataset or API issue",
+          "Basic statistical analysis used due to system fallback",
       },
       prediction: {
         direction: "STABLE",
         confidence: 0,
       },
-      tasks: [
-        "Check dataset quality",
-        "Verify API key and retry",
-      ],
-      farmer_advisory: [
-        "Do not rely on system during unstable state",
-      ],
+      tasks: ["Retry with better dataset"],
+      farmer_advisory: ["Do not rely on unstable output"],
     };
   }
 };
 
-
-
+// ================= CHAT =================
 export const generateChatResponse = async (data, question) => {
   try {
-        canCallAI(); // ✅ ADD HERE
+    await waitIfNeeded();
 
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error("Invalid dataset for chat");
-    }
-
-    if (!question || question.trim().length === 0) {
-      throw new Error("Empty question");
-    }
-
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
-
-    // 🔥 Clean + limit data
     const cleanData = data
-      .filter(
-        (row) =>
-          row &&
-          row.date &&
-          row.commodity &&
-          row.arrival >= 0 &&
-          row.price >= 0
-      )
+      .map((row) => ({
+        arrival: Number(row.arrival) || 0,
+        price: Number(row.price) || 0,
+      }))
+      .filter((r) => r.arrival !== 0 || r.price !== 0)
       .slice(0, 50);
 
     if (cleanData.length === 0) {
-      throw new Error("No usable data for chat");
+      return "No usable data found. Upload better dataset.";
     }
-
-    // 🔥 Add grounding stats (IMPORTANT)
-    const prices = cleanData.map((r) => r.price);
-    const arrivals = cleanData.map((r) => r.arrival);
 
     const avgPrice =
-      prices.reduce((a, b) => a + b, 0) / prices.length;
+      cleanData.reduce((a, b) => a + b.price, 0) /
+      cleanData.length;
 
     const avgArrival =
-      arrivals.reduce((a, b) => a + b, 0) / arrivals.length;
+      cleanData.reduce((a, b) => a + b.arrival, 0) /
+      cleanData.length;
 
-    const latest = cleanData[cleanData.length - 1];
+    const latest = cleanData.at(-1);
 
-    const summary = {
-      avgPrice,
-      avgArrival,
-      latestPrice: latest.price,
-      latestArrival: latest.arrival,
-    };
+    let answer = "";
 
-    const prompt = `
-You are a practical agricultural market assistant.
-
-STRICT RULES:
-- Always base your answer on the dataset
-- Never say "no data"
-- If uncertain, explain risk clearly
-- Give actionable advice (not theory)
-
-MARKET LOGIC:
-- High arrivals + falling prices → oversupply → risk
-- Low arrivals + rising prices → shortage → opportunity
-
-DATA SUMMARY:
-${JSON.stringify(summary)}
-
-RAW DATA:
-${JSON.stringify(cleanData)}
-
-USER QUESTION:
-${question}
-
-OUTPUT:
-Give a clear, short, practical answer.
-Focus on:
-- what is happening
-- what the user should do
-`;
-
-    // 🔥 Use retry (same as main function)
-    const result = await callWithRetry(() =>
-      model.generateContent(prompt)
-    );
-
-    const text = result.response.text();
-
-    if (!text) {
-      throw new Error("Empty AI response");
+    if (latest.arrival > avgArrival && latest.price < avgPrice) {
+      answer =
+        "Oversupply detected. Prices may drop. Avoid selling now.";
+    } else if (
+      latest.arrival < avgArrival &&
+      latest.price > avgPrice
+    ) {
+      answer =
+        "Demand is strong. This is a good time to sell.";
+    } else {
+      answer =
+        "Market is stable. Wait and observe for clearer signals.";
     }
 
-    return text.trim();
+    return answer;
 
   } catch (error) {
     console.error("Chat AI Error:", error.message);
 
-    return "AI could not process your question right now.";
+    return "System fallback: basic market insight only.";
   }
 };
