@@ -111,3 +111,19 @@ This project is for academic and prototype demonstration purposes.
 ## ⭐ Acknowledgment
 
 Special thanks to Google Gemini API for enabling intelligent data analysis capabilities.
+
+
+## UI overview
+
+
+<img width="1126" height="839" alt="Screenshot 2026-04-23 174915" src="https://github.com/user-attachments/assets/1cd3a6d1-d4a6-41ac-99c8-5b44debc0605" />
+
+
+<img width="1693" height="920" alt="Screenshot 2026-04-23 174546" src="https://github.com/user-attachments/assets/01e393f6-34c4-43a8-a32d-ebc5eef243d3" />
+<img width="1133" height="718" alt="Screenshot 2026-04-23 175134" src="https://github.com/user-attachments/assets/fb8bf295-2fe9-45ac-97d6-da0947eea79a" />
+<img width="1133" height="720" alt="Screenshot 2026-04-23 175237" src="https://github.com/user-attachments/assets/a201a348-32a5-4a16-93ad-530ab27e853c" />
+
+<img width="1120" height="896" alt="Screenshot 2026-04-23 175027" src="https://github.com/user-attachments/assets/006c8182-accf-4746-9b31-b75817ee0e0a" />
+<img width="1120" height="896" alt="Screenshot 2026-04-23 175027" src="https://github.com/user-attachments/assets/006c8182-accf-4746-9b31-b75817ee0e0a" />
+
+
