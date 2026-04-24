@@ -44,9 +44,7 @@ export default function FileUpload({ onFileSelect, disabled }) {
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
       `}
     >
-      <p className="text-gray-400 text-sm mb-4">
-        Drag & drop your CSV file here
-      </p>
+      <p className="text-gray-400 text-sm mb-4">Drag & drop your file here</p>
 
       <label className="bg-[#E67E22] hover:bg-[#d3721f] text-white px-6 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors">
         Browse File

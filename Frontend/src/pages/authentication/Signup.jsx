@@ -101,7 +101,8 @@ const Signup = () => {
                 id="name"
                 name="name"
                 type="text"
-                className="w-full h-12 border rounded-xl px-4 mt-1"
+                placeholder="Enter your name"
+                className="w-full h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 mt-1"
                 value={name}
                 onChange={(e) => setname(e.target.value)}
                 required
@@ -117,7 +118,8 @@ const Signup = () => {
                 id="email"
                 name="email"
                 type="email"
-                className="w-full h-12 border rounded-xl px-4 mt-1"
+                placeholder="Enter your email"
+                className="w-full h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 mt-1"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -133,7 +135,8 @@ const Signup = () => {
                 id="password"
                 name="password"
                 type="password"
-                className="w-full h-12 border rounded-xl px-4 mt-1"
+                placeholder="Enter your password"
+                className="w-full h-12 bg-gray-50 border border-gray-200 rounded-xl px-4 mt-1"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
