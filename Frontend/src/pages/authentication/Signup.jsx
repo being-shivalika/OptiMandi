@@ -17,11 +17,10 @@ const Signup = () => {
 
   const SubmitRegiter = async (e) => {
     e.preventDefault();
+
     try {
-      // It's better to set this globally in main.jsx, but here is fine for now
       axios.defaults.withCredentials = true;
 
-      // Use template literals to avoid double-slash errors
       const { data } = await axios.post(`${backendURL}/api/auth/register`, {
         name,
         email,
@@ -29,15 +28,18 @@ const Signup = () => {
       });
 
       if (data.success) {
+        // 🔥 IMPORTANT FIX
+        localStorage.setItem("token", data.token);
+
         setIsLoggedin(true);
-        getUserData();
+        await getUserData();
+
         toast.success("Account created!");
         navigate("/dashboard");
       } else {
         toast.error(data.message);
       }
     } catch (err) {
-      // Safely access the error message from the backend
       toast.error(err.response?.data?.message || "Registration failed");
     }
   };
