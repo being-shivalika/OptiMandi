@@ -8,7 +8,7 @@ const logo = "/logo.png";
 
 const Signup = () => {
   // Destructure correctly from the fixed context
-  const { setIsLoggedin, getUserData } = useContext(AuthContext);
+  const { backendURL, setIsLoggedin, getUserData } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [name, setname] = useState("");
@@ -22,14 +22,11 @@ const Signup = () => {
       axios.defaults.withCredentials = true;
 
       // Use template literals to avoid double-slash errors
-      const { data } = await axios.post(
-        `https://optimandi.onrender.com/api/auth/register`,
-        {
-          name,
-          email,
-          password,
-        },
-      );
+      const { data } = await axios.post(`${backendURL}/api/auth/register`, {
+        name,
+        email,
+        password,
+      });
 
       if (data.success) {
         setIsLoggedin(true);
