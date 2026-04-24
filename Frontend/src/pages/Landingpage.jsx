@@ -75,11 +75,11 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="/login">
+            <Link to="/login">
               <button className="bg-[#E67E22] hover:bg-[#e67d22ad] px-5 py-2 md:px-6 md:py-3 rounded-lg text-sm">
                 Start Tracking
               </button>
-            </a>
+            </Link>
             <Link to="/signup">
               <button className="border border-[#E67E22] hover:bg-[#1c3f0ead] px-5 py-2 md:px-6 md:py-3 rounded-lg text-sm">
                 Register Now
