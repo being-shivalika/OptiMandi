@@ -23,11 +23,30 @@ const PORT = process.env.PORT || 8080;
 const app = express();
 
 app.use(express.json());
-app.use(cors({
-    origin: ['http://localhost:5174',
-        'https://opti-mandi.vercel.app'], // Your frontend URL
-    credentials: true
-}));
+import cors from "cors";
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://opti-mandi.vercel.app",
+  "https://opti-mandi-knsceob60-shivalika-mehras-projects.vercel.app"
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+app.options("*", cors());
 
 app.get('/', (req, res)=>{
     res.send('Hello World');
