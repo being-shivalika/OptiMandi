@@ -3,7 +3,6 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import mongoose from "mongoose";
 import dns from "dns";
 
 import connectDB from "./config/db.js";
@@ -18,10 +17,10 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// ---------------- MIDDLEWARE ----------------
+// ---------------- BODY PARSER ----------------
 app.use(express.json());
 
-// IMPORTANT: Render + Vercel CORS FIX
+// ---------------- CORS ----------------
 const allowedOrigins = [
   "http://localhost:5173",
   "https://opti-mandi.vercel.app",
@@ -31,33 +30,34 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow server-to-server / mobile apps / postman
+      // allow Postman / server calls
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
-      } else {
-        return callback(null, false); // IMPORTANT: don't throw error
       }
+
+      // instead of crashing → just block silently
+      return callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
 
-// preflight fix (VERY IMPORTANT for login/register)
-app.options("*", cors());
+// IMPORTANT: preflight handling (Express 5 safe way)
+app.options(/.*/, cors());
 
 // ---------------- ROUTES ----------------
 app.get("/", (req, res) => {
-  res.send("Hello World");
+  res.send("OptiMandi Backend Running 🚀");
 });
 
 app.use("/api/auth", authRouter);
 app.use("/api", uploadRoutes);
 app.use("/api/ai", aiRoutes);
 
-// ---------------- SERVER ----------------
+// ---------------- START SERVER ----------------
 app.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });
