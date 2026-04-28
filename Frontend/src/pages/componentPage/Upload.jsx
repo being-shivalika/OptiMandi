@@ -10,7 +10,7 @@ const Upload = () => {
 
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // 🔥 FILE UPLOAD
+  // 🔥 FILE UPLOAD new
   const handleFileSelect = async (file) => {
     if (!file) return;
 
