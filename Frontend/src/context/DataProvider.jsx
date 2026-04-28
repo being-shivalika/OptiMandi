@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { DataContext } from "./DataContext";
 
-export const DataProvider = ({ children }) => {
+const DataProvider = ({ children }) => {
   const [data, setData] = useState(() => {
     const saved = localStorage.getItem("mandiData");
     return saved ? JSON.parse(saved) : null;
@@ -60,3 +60,5 @@ export const DataProvider = ({ children }) => {
     </DataContext.Provider>
   );
 };
+
+export default DataProvider;
