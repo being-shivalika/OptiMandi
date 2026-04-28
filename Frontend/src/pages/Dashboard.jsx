@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataContext } from "../context/DataContext";
-import { DataProvider } from "../../context/DataProvider";
+import { DataProvider } from "../context/DataProvider";
 import { AuthContext } from "../context/AuthContext";
 import Layout from "./componentPage/Layout";
 

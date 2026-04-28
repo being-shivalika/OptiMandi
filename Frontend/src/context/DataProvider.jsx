@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { DataContext } from "./dataContext";
+import { DataContext } from "./DataContext";
 
 export const DataProvider = ({ children }) => {
   const [data, setData] = useState(() => {
