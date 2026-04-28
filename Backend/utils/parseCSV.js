@@ -3,26 +3,17 @@ import { Readable } from "stream";
 
 const cleanNumber = (val) => {
   if (!val) return 0;
-
-  return Number(
-    String(val)
-      .replace(/,/g, "")
-      .replace(/[^\d.]/g, "")
-      .trim()
-  ) || 0;
+  return Number(String(val).replace(/,/g, "").replace(/[^\d.]/g, "").trim()) || 0;
 };
 
-// 🔥 flexible column finder
-const findKey = (obj, possibleKeys) => {
-  const keys = Object.keys(obj);
+const findKey = (obj, keys) => {
+  const rowKeys = Object.keys(obj);
 
-  for (let key of keys) {
-    const normalized = key.toLowerCase().replace(/\s+/g, "").replace(/_/g, "");
+  for (let key of rowKeys) {
+    const normalized = key.toLowerCase().replace(/\s+/g, "");
 
-    for (let p of possibleKeys) {
-      if (normalized.includes(p)) {
-        return obj[key];
-      }
+    if (keys.some(k => normalized.includes(k))) {
+      return obj[key];
     }
   }
 
@@ -38,30 +29,40 @@ export const parseCSV = (buffer) => {
     stream.push(null);
 
     stream
-      .pipe(csv()) // DO NOT TOUCH THIS NOW
+      .pipe(csv())
       .on("data", (row) => {
-  const key = Object.keys(row)[0]; // single broken column
-  const raw = row[key];
+        // 🔥 Try normal structured CSV first
+        let parsedRow = {
+          date: findKey(row, ["date"]),
+          commodity: findKey(row, ["commodity", "crop"]),
+          market: findKey(row, ["market", "mandi", "location"]),
+          arrival: cleanNumber(findKey(row, ["arrival"])),
+          price: cleanNumber(findKey(row, ["price", "rate", "modal"])),
+        };
 
-  if (!raw) return;
+        // 🔥 Fallback for broken single-column CSV
+        if (!parsedRow.price) {
+          const key = Object.keys(row)[0];
+          const raw = row[key];
 
-  // 🔥 split manually
-  const parts = raw.split(",");
+          if (!raw) return;
 
-  const cleanedRow = {
-    date: parts[1] || "",
-    commodity: parts[2] || "",
-    arrival: Number(parts[3]) || 0,
-    price: Number(parts[6]) || 0,
-  };
+          const parts = raw.split(",");
 
-  results.push(cleanedRow);
-})
-      .on("end", () => {
-        console.log("✅ Parsed rows:", results.length);
-        console.log("📊 SAMPLE:", results.slice(0, 5));
-        resolve(results);
+          parsedRow = {
+            market: parts[0] || "unknown",
+            date: parts[1] || "",
+            commodity: parts[2] || "",
+            arrival: cleanNumber(parts[3]),
+            price: cleanNumber(parts[parts.length - 1]),
+          };
+        }
+
+        if (parsedRow.price) {
+          results.push(parsedRow);
+        }
       })
+      .on("end", () => resolve(results))
       .on("error", reject);
   });
 };

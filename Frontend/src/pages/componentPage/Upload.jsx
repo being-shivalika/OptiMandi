@@ -1,22 +1,42 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataContext } from "../../context/DataContext";
 import Layout from "./Layout";
 import FileUpload from "../../components/FileUpload";
 
-export default function Upload() {
-  const { data, setData } = useContext(DataContext);
+const Upload = () => {
+  const { data, uploadFile, loading, error } = useContext(DataContext);
   const navigate = useNavigate();
 
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  uploadSuccess && setTimeout(() => setUploadSuccess(false), 3000);
   const [lastCallTime, setLastCallTime] = useState(0);
 
-  // ✅ CHAT STATE (YOU MISSED THIS)
+  // 🔥 CHAT STATE
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+
+  // ✅ REDIRECT AFTER SUCCESS (SAFE WAY)
+  useEffect(() => {
+    if (uploadSuccess) {
+      const timer = setTimeout(() => {
+        navigate("/dashboard");
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [uploadSuccess, navigate]);
+
+  // 🔥 FILE UPLOAD (NOW USING CONTEXT)
+  const handleFileSelect = async (file) => {
+    if (!file) return;
+
+    await uploadFile(file);
+
+    // If upload worked → data will be set automatically
+    if (!error) {
+      setUploadSuccess(true);
+    }
+  };
 
   // 🔥 CHAT FUNCTION
   const askAI = async () => {
@@ -29,13 +49,14 @@ export default function Upload() {
       }
 
       setLastCallTime(now);
+
       const res = await fetch("https://optimandi.onrender.com/api/ai/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          data, // ⚠️ TEMP: works, but not ideal (explained below)
+          data: data?.cleanedData || data?.report || data,
           question,
         }),
       });
@@ -53,59 +74,6 @@ export default function Upload() {
     }
   };
 
-  // 🔥 FILE UPLOAD
-  const handleFileSelect = async (file) => {
-    if (!file) return;
-
-    setIsUploading(true);
-    setError(null);
-    setUploadSuccess(false);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("https://optimandi.onrender.com/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.message || "Upload failed");
-      }
-
-      const aiData = result.data;
-
-      if (!aiData?.report || !aiData?.tasks || !aiData?.prediction) {
-        throw new Error("Invalid AI response structure");
-      }
-
-      const finalData = {
-        ...aiData,
-        lastUpload: {
-          commodity: "Mixed Commodities",
-          date: new Date().toLocaleDateString(),
-          qty: "Processed",
-        },
-      };
-
-      setData(finalData);
-
-      setUploadSuccess(true);
-
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
-    } catch (err) {
-      console.error("Upload Error:", err);
-      setError(err.message || "Something went wrong");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   return (
     <Layout title="Upload Data">
       <div className="max-w-4xl mx-auto mt-10">
@@ -116,25 +84,26 @@ export default function Upload() {
               Upload Your First Mandi Data
             </h1>
 
-            <FileUpload
-              onFileSelect={handleFileSelect}
-              disabled={isUploading}
-            />
+            <FileUpload onFileSelect={handleFileSelect} disabled={loading} />
           </div>
         ) : (
           <div className="space-y-6">
-            <FileUpload
-              onFileSelect={handleFileSelect}
-              disabled={isUploading}
-            />
+            <FileUpload onFileSelect={handleFileSelect} disabled={loading} />
           </div>
         )}
 
         {/* LOADING */}
-        {isUploading && <p className="text-blue-400 mt-4">Analyzing...</p>}
+        {loading && <p className="text-blue-400 mt-4">Analyzing...</p>}
 
         {/* ERROR */}
         {error && <p className="text-red-400 mt-4">{error}</p>}
+
+        {/* SUCCESS */}
+        {uploadSuccess && (
+          <p className="text-green-400 mt-4">
+            Upload successful! Redirecting...
+          </p>
+        )}
 
         {/* CHAT SECTION */}
         {data && (
@@ -145,12 +114,12 @@ export default function Upload() {
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Ask something..."
-              className="w-full p-3 bg-[#0a1f1a] text-white mb-4"
+              className="w-full p-3 bg-[#0a1f1a] text-white mb-4 rounded"
             />
 
             <button
               onClick={askAI}
-              className="bg-orange-500 px-4 py-2 text-white"
+              className="bg-orange-500 px-4 py-2 text-white rounded"
             >
               Ask
             </button>
@@ -165,4 +134,6 @@ export default function Upload() {
       </div>
     </Layout>
   );
-}
+};
+
+export default Upload;

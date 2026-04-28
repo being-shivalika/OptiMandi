@@ -1,10 +1,8 @@
-import { parseCSV } from "../utils/parseCSV.js";
-import { parseExcel } from "../utils/parseExcel.js";
-import { parsePDF } from "../utils/parsePDF.js";
-import { generateInsights } from "../services/geminiService.js";
+import { processMandiData } from "../services/dataProcessor.js";
 
 export const handleUpload = async (req, res) => {
   try {
+    // 1. Basic validation
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -12,43 +10,25 @@ export const handleUpload = async (req, res) => {
       });
     }
 
-    let parsedData = [];
+    // 2. Delegate ALL logic to service layer
+    const result = await processMandiData(req.file);
 
-    const fileType = req.file.mimetype;
-
-    // 🔥 SWITCH BASED ON FILE TYPE
-    if (fileType.includes("csv")) {
-      parsedData = await parseCSV(req.file.buffer);
-    } 
-    else if (fileType.includes("excel") || fileType.includes("spreadsheet")) {
-      parsedData = await parseExcel(req.file.buffer);
-    } 
-    else if (fileType.includes("pdf")) {
-      parsedData = await parsePDF(req.file.buffer);
-    } 
-    else {
+    // 3. Handle empty result case
+    if (!result || !result.cleanedData?.length) {
       return res.status(400).json({
         success: false,
-        message: "Unsupported file type",
+        message: "File processed but no usable data found",
       });
     }
 
-    if (!parsedData.length) {
-      return res.status(400).json({
-        success: false,
-        message: "File parsed but no usable data",
-      });
-    }
-
-    const aiResponse = await generateInsights(parsedData);
-
+    // 4. Send structured response
     return res.status(200).json({
       success: true,
-      data: aiResponse,
+      data: result,
     });
 
   } catch (error) {
-    console.error("Upload Error:", error);
+    console.error("Upload Controller Error:", error);
 
     return res.status(500).json({
       success: false,
