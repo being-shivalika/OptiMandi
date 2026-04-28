@@ -10,18 +10,24 @@ export const handleUpload = async (req, res) => {
       });
     }
 
-    // 2. Delegate ALL logic to service layer
+    // 2. Process file
     const result = await processMandiData(req.file);
 
-    // 3. Handle empty result case
-    if (!result || !result.cleanedData?.length) {
-      return res.status(400).json({
-        success: false,
-        message: "File processed but no usable data found",
+    // 3. Normalize safety check
+    const data = result?.cleanedData || [];
+
+    // 4. EMPTY DATA CASE (NOT ERROR, JUST WARNING)
+    if (data.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          cleanedData: [],
+          message: "File processed but no usable data found",
+        },
       });
     }
 
-    // 4. Send structured response
+    // 5. Success response
     return res.status(200).json({
       success: true,
       data: result,

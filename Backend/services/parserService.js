@@ -9,45 +9,72 @@ import { parsePDF } from "../utils/parsePDF.js";
  */
 export const parseFile = async (file) => {
   try {
-    if (!file || !file.buffer) {
-      throw new Error("Invalid file input");
+    if (!file) {
+      throw new Error("No file provided");
     }
 
-    const mimeType = file.mimetype;
+    if (!file.buffer) {
+      throw new Error("File buffer missing (check multer config)");
+    }
+
+    const mimeType = file.mimetype || "";
+    const fileName = file.originalname || "";
 
     let parsedData = [];
 
-    // CSV
-    if (mimeType.includes("csv")) {
-      parsedData = await parseCSV(file.buffer);
+    // helper: safe fallback
+    const safeResult = (data) => {
+      if (!Array.isArray(data)) return [];
+      return data;
+    };
+
+    // ================= CSV =================
+    if (
+      mimeType.includes("csv") ||
+      fileName.endsWith(".csv")
+    ) {
+      parsedData = safeResult(await parseCSV(file.buffer));
     }
 
-    // Excel (xls, xlsx)
+    // ================= EXCEL =================
     else if (
       mimeType.includes("excel") ||
       mimeType.includes("spreadsheet") ||
-      mimeType.includes("sheet")
+      mimeType.includes("sheet") ||
+      fileName.endsWith(".xlsx") ||
+      fileName.endsWith(".xls")
     ) {
-      parsedData = await parseExcel(file.buffer);
+      parsedData = safeResult(await parseExcel(file.buffer));
     }
 
-    // PDF
-    else if (mimeType.includes("pdf")) {
-      parsedData = await parsePDF(file.buffer);
+    // ================= PDF =================
+    else if (
+      mimeType.includes("pdf") ||
+      fileName.endsWith(".pdf")
+    ) {
+      parsedData = safeResult(await parsePDF(file.buffer));
     }
 
+    // ================= UNKNOWN TYPE =================
     else {
-      throw new Error("Unsupported file type");
+      console.warn("Unsupported file type:", mimeType, fileName);
+      return [];
     }
 
-    if (!parsedData || parsedData.length === 0) {
-      throw new Error("Parsing succeeded but no data extracted");
+    // ================= IMPORTANT FIX =================
+    // ❌ DO NOT THROW ERROR FOR EMPTY DATA (this was your bug)
+    if (parsedData.length === 0) {
+      console.warn("Parser returned empty dataset");
+      return [];
     }
 
     return parsedData;
 
   } catch (error) {
     console.error("Parser Service Error:", error.message);
-    throw error;
+
+    // IMPORTANT: don't crash whole upload pipeline
+    // return empty instead of throwing
+    return [];
   }
 };

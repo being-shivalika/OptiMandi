@@ -14,33 +14,69 @@ export const processMandiData = async (file) => {
     // 1. PARSE FILE
     const rawData = await parseFile(file);
 
-    if (!rawData || rawData.length === 0) {
-      throw new Error("No data extracted from file");
+    // SAFE FALLBACK (don’t crash pipeline)
+    if (!Array.isArray(rawData) || rawData.length === 0) {
+      return {
+        cleanedData: [],
+        trends: [],
+        aiInsights: {
+          summary: "No valid data found in uploaded file",
+        },
+        report: null,
+      };
     }
 
-    // 2. NORMALIZE DATA (critical for consistency)
+    // 2. NORMALIZE DATA
     const cleanedData = normalizeData(rawData);
 
-    if (!cleanedData.length) {
-      throw new Error("Data normalization failed");
+    if (!Array.isArray(cleanedData) || cleanedData.length === 0) {
+      return {
+        cleanedData: [],
+        trends: [],
+        aiInsights: {
+          summary: "Data could not be normalized properly",
+        },
+        report: null,
+      };
     }
 
-    // 3. CALCULATE DETERMINISTIC TRENDS (NON-AI VALUE)
-    const trends = calculateTrends(cleanedData);
+    // 3. CALCULATE TRENDS (safe execution)
+    let trends = [];
+    try {
+      trends = calculateTrends(cleanedData) || [];
+    } catch (err) {
+      console.warn("Trend calculation failed:", err.message);
+      trends = [];
+    }
 
-    // 4. AI INSIGHTS (based on structured data, NOT raw junk)
-    const aiInsights = await generateInsights({
-      cleanedData,
-      trends,
-    });
+    // 4. AI INSIGHTS (never break pipeline if AI fails)
+    let aiInsights = {
+      summary: "AI insights unavailable",
+    };
 
-    // 5. FINAL REPORT STRUCTURE
-    const report = formatReport({
-      cleanedData,
-      trends,
-      aiInsights,
-    });
+    try {
+      aiInsights = await generateInsights({
+        cleanedData,
+        trends,
+      }) || aiInsights;
+    } catch (err) {
+      console.warn("AI insight failure:", err.message);
+    }
 
+    // 5. FINAL REPORT
+    let report = null;
+
+    try {
+      report = formatReport({
+        cleanedData,
+        trends,
+        aiInsights,
+      });
+    } catch (err) {
+      console.warn("Report formatting failed:", err.message);
+    }
+
+    // 6. FINAL RETURN (ALWAYS SAFE)
     return {
       cleanedData,
       trends,
@@ -50,6 +86,15 @@ export const processMandiData = async (file) => {
 
   } catch (error) {
     console.error("Data Processing Error:", error);
-    throw error;
+
+    // NEVER crash full pipeline
+    return {
+      cleanedData: [],
+      trends: [],
+      aiInsights: {
+        summary: "Processing failed due to unexpected error",
+      },
+      report: null,
+    };
   }
 };
