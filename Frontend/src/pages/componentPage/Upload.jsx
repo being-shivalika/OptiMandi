@@ -15,11 +15,14 @@ const Upload = () => {
     if (!file) return;
 
     try {
-      const res = await uploadFile(file);
-
-      const backendData = res?.data;
+      const backendData = await uploadFile(file);
 
       const cleanedData = backendData?.cleanedData || [];
+
+      if (!cleanedData.length) {
+        alert("No usable data found");
+        return;
+      }
 
       // ❌ DO NOT PROCEED IF EMPTY
       if (!cleanedData.length) {
