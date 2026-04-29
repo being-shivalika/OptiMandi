@@ -26,20 +26,23 @@ const DataProvider = ({ children }) => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("https://optimandi.onrender.com/api/upload", {
+      const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+      const res = await fetch(`${BASE_URL}/api/upload`, {
         method: "POST",
         body: formData,
       });
 
       const result = await res.json();
 
-      if (!res.ok) throw new Error(result.message);
+      if (!res.ok) throw new Error(result.message || "Upload failed");
 
       const normalizedData = result?.data || result;
 
       setData(normalizedData);
       return normalizedData;
     } catch (err) {
+      console.error("UPLOAD ERROR:", err);
       setError(err.message);
       return null;
     } finally {
