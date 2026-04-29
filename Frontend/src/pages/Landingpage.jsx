@@ -112,7 +112,7 @@ export default function LandingPage() {
             [
               "fa-file-circle-plus",
               "Upload Mandi Data",
-              "Easily upload daily data using CSV or manual entry.",
+              "Easily upload daily data or manual entry.",
             ],
             [
               "fa-money-bill-trend-up",
@@ -161,7 +161,7 @@ export default function LandingPage() {
 
               <h3 className="text-lg font-semibold">Step 1: Upload Data</h3>
               <p className="text-gray-400 text-sm mt-1">
-                Add daily mandi data using CSV or manual input.
+                Add daily mandi data or manual input.
               </p>
             </div>
 
