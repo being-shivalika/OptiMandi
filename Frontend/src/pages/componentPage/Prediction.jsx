@@ -7,9 +7,13 @@ export default function Predictions() {
   const { data } = useContext(DataContext);
   const navigate = useNavigate();
 
-  const prediction = data?.prediction;
+  // ✅ SUPPORT MULTIPLE SOURCES
+  const prediction =
+    data?.prediction ||
+    data?.report?.prediction ||
+    data?.aiInsights?.prediction;
 
-  // 🔴 NO DATA STATE
+  // 🔴 NO DATA
   if (!prediction) {
     return (
       <Layout title="Predictions">
@@ -21,7 +25,7 @@ export default function Predictions() {
           </h2>
 
           <p className="text-gray-400 mt-2 max-w-sm">
-            Upload mandi data to generate AI-based market predictions.
+            Upload better mandi data to generate predictions.
           </p>
 
           <button
@@ -35,9 +39,16 @@ export default function Predictions() {
     );
   }
 
-  // 🔥 MAP VALUES
-  const direction = prediction.direction;
-  const confidence = Math.round((prediction.confidence || 0) * 100);
+  // ✅ SAFE VALUES
+  const direction = prediction.direction || "STABLE";
+
+  let confidence =
+    typeof prediction.confidence === "number" ? prediction.confidence : 0.65;
+
+  // 🔥 FIX: HANDLE 0–1 OR 0–100
+  if (confidence <= 1) confidence = confidence * 100;
+
+  confidence = Math.round(confidence);
 
   const directionStyles = {
     UP: "text-green-400",
@@ -60,7 +71,7 @@ export default function Predictions() {
         <div>
           <h2 className="text-2xl font-bold text-white">Market Prediction</h2>
           <p className="text-gray-400 text-sm">
-            AI-based short-term direction using recent mandi data.
+            AI + statistical direction forecast
           </p>
         </div>
 
@@ -71,9 +82,15 @@ export default function Predictions() {
             <p className="text-gray-400 text-sm mb-2">Expected Direction</p>
 
             <h1
-              className={`text-3xl font-bold flex items-center justify-center gap-3 ${directionStyles[direction]}`}
+              className={`text-3xl font-bold flex items-center justify-center gap-3 ${
+                directionStyles[direction] || "text-white"
+              }`}
             >
-              <i className={`fa-solid ${directionIcons[direction]}`}></i>
+              <i
+                className={`fa-solid ${
+                  directionIcons[direction] || "fa-minus"
+                }`}
+              ></i>
               {direction}
             </h1>
           </div>
@@ -93,22 +110,22 @@ export default function Predictions() {
           </div>
         </div>
 
-        {/* INTERPRETATION BLOCK (THIS IS WHAT MAKES YOU LOOK SMART) */}
+        {/* INTERPRETATION */}
         <div className="bg-[#153b31] p-6 rounded-xl">
           <h3 className="text-white font-semibold mb-3">What This Means</h3>
 
           <p className="text-gray-300 text-sm leading-relaxed">
             {direction === "UP" &&
-              "Prices are expected to rise. Consider holding stock or delaying sales to maximize profit."}
+              "Prices likely to rise. Consider holding inventory."}
 
             {direction === "DOWN" &&
-              "Prices are likely to drop due to oversupply. Immediate selling or diversion is recommended."}
+              "Prices may fall due to supply pressure. Selling early is safer."}
 
             {direction === "STABLE" &&
-              "Market conditions are stable. No major price movement expected in the short term."}
+              "No major movement expected. Maintain steady strategy."}
 
             {direction === "MIXED" &&
-              "Market signals are unclear. Monitor closely before making large decisions."}
+              "Market unclear. Avoid aggressive decisions."}
           </p>
         </div>
       </div>

@@ -3,71 +3,87 @@
  */
 
 export const formatReport = ({ cleanedData, trends, aiInsights }) => {
-  try {
-    if (!trends || !trends.metrics) {
-      return {
-        summary: "No sufficient data for report",
-        insights: [],
-      };
-    }
+  // 🔥 BASIC DERIVED VALUES
+  const avgPrice =
+    cleanedData.reduce((sum, item) => sum + item.price, 0) /
+    (cleanedData.length || 1);
 
-    const { metrics } = trends;
+  const lastPrice = cleanedData[cleanedData.length - 1]?.price || 0;
+  const firstPrice = cleanedData[0]?.price || 0;
 
-    // 🎯 CORE SUMMARY (human readable)
-    const summary = `Prices moved from ₹${metrics.firstPrice} to ₹${metrics.lastPrice}, showing a ${metrics.direction} of ${metrics.percentageChange}% with ${metrics.risk} risk.`;
+  const priceChange = lastPrice - firstPrice;
 
-    // 📊 KEY METRICS (frontend cards)
-    const keyMetrics = {
-      averagePrice: metrics.avgPrice,
-      changePercent: metrics.percentageChange,
-      volatility: metrics.volatility,
-      dataPoints: metrics.dataPoints,
-    };
+  // 🔥 TREND LOGIC
+  let trend = "STABLE";
+  if (priceChange > 5) trend = "UP";
+  else if (priceChange < -5) trend = "DOWN";
 
-    // 🚦 SIGNAL (main decision output)
-    const signal = {
-      action: metrics.signal, // buy / sell / hold
-      confidence:
-        metrics.risk === "low"
-          ? "high"
-          : metrics.risk === "medium"
-          ? "moderate"
-          : "low",
-    };
+  // 🔥 RISK LOGIC
+  let risk = "LOW";
+  if (Math.abs(priceChange) > 15) risk = "HIGH";
+  else if (Math.abs(priceChange) > 8) risk = "MEDIUM";
 
-    // 🧠 AI INSIGHTS CLEANUP
-    let insights = [];
+  // 🔥 PREDICTION (THIS WAS MISSING)
+  const prediction = {
+    direction: trend,
+    confidence: Math.min(Math.abs(priceChange) / 20, 1), // normalize 0–1
+  };
 
-    if (aiInsights) {
-      if (Array.isArray(aiInsights)) {
-        insights = aiInsights;
-      } else if (typeof aiInsights === "string") {
-        // Split into bullet points if raw text
-        insights = aiInsights
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean);
-      } else if (aiInsights.points) {
-        insights = aiInsights.points;
-      }
-    }
+  // 🔥 TASKS (HARDCODED INTELLIGENCE — MVP LEVEL)
+  let tasks = [];
 
-    // 🧾 FINAL REPORT OBJECT
-    return {
-      summary,
-      signal,
-      keyMetrics,
-      insights,
-    };
-
-  } catch (error) {
-    console.error("Report Formatter Error:", error);
-
-    return {
-      summary: "Error generating report",
-      signal: { action: "hold", confidence: "low" },
-      keyMetrics: {},
-      insights: [],
-    };
+  if (trend === "UP") {
+    tasks.push({
+      text: "Hold stock to sell at higher prices",
+      priority: "HIGH",
+    });
+  } else if (trend === "DOWN") {
+    tasks.push({
+      text: "Sell inventory before further price drop",
+      priority: "HIGH",
+    });
+  } else {
+    tasks.push({
+      text: "Monitor market for clearer signals",
+      priority: "MEDIUM",
+    });
   }
+
+  // 🔥 FARMER ADVISORY
+  let farmer_advisory = [];
+
+  if (risk === "HIGH") {
+    farmer_advisory.push(
+      "Market is volatile. Avoid large stock decisions."
+    );
+  } else {
+    farmer_advisory.push(
+      "Stable conditions. Plan selling strategically."
+    );
+  }
+
+  // 🔥 FINAL REPORT OBJECT
+  return {
+    summary:
+      aiInsights?.summary ||
+      `Market shows ${trend} trend with ${risk} risk levels.`,
+
+    trend,
+    risk,
+
+    keyMetrics: {
+      avgPrice: avgPrice.toFixed(2),
+      change: priceChange.toFixed(2),
+    },
+
+    insights: [
+      `Price moved from ${firstPrice} to ${lastPrice}`,
+      `Average price is ${avgPrice.toFixed(2)}`,
+    ],
+
+    // 🔥 IMPORTANT: embed everything OR return separately
+    prediction,
+    tasks,
+    farmer_advisory,
+  };
 };

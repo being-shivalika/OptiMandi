@@ -7,7 +7,9 @@ export default function Tasks() {
   const { data } = useContext(DataContext);
   const navigate = useNavigate();
 
-  const tasks = data?.tasks || [];
+  // ✅ SUPPORT BOTH STRUCTURES
+  const tasks =
+    data?.tasks || data?.report?.tasks || data?.aiInsights?.tasks || [];
 
   // 🔴 NO DATA
   if (!tasks.length) {
@@ -15,15 +17,18 @@ export default function Tasks() {
       <Layout title="Tasks">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
           <i className="fa-solid fa-list-check text-4xl text-[#E67E22] mb-4"></i>
+
           <h2 className="text-xl font-bold text-white">No Tasks Available</h2>
+
           <p className="text-gray-400 mt-2 max-w-sm">
-            Upload mandi data to generate actionable steps.
+            Either no insights were generated or dataset was weak.
           </p>
+
           <button
             onClick={() => navigate("/upload")}
             className="mt-6 bg-[#E67E22] px-6 py-2 rounded-lg"
           >
-            Upload Data
+            Upload Better Data
           </button>
         </div>
       </Layout>
@@ -36,16 +41,17 @@ export default function Tasks() {
         {/* HEADER */}
         <div>
           <h2 className="text-2xl font-bold text-white">Recommended Actions</h2>
-          <p className="text-gray-400 text-sm">
-            AI-generated steps based on market conditions.
-          </p>
+          <p className="text-gray-400 text-sm">AI + logic based suggestions</p>
         </div>
 
         {/* TASK LIST */}
         <div className="space-y-4">
           {tasks.map((task, i) => {
             const text = typeof task === "string" ? task : task.text;
-            const priority = task.priority || "MEDIUM";
+
+            const priority =
+              task.priority ||
+              (text?.toLowerCase().includes("sell") ? "HIGH" : "MEDIUM");
 
             const styles = {
               HIGH: "border-red-500 text-red-100",
@@ -56,7 +62,9 @@ export default function Tasks() {
             return (
               <div
                 key={i}
-                className={`flex justify-between items-center p-4 border-l-4 rounded-lg bg-[#112B24] ${styles[priority]}`}
+                className={`flex justify-between items-center p-4 border-l-4 rounded-lg bg-[#112B24] ${
+                  styles[priority] || styles.MEDIUM
+                }`}
               >
                 <p>{text}</p>
                 <span className="text-xs opacity-60">{priority}</span>

@@ -67,24 +67,31 @@ const enforceEnums = (data) => {
 };
 
 // ================= MAIN ANALYSIS =================
-export const generateInsights = async (data) => {
+export const generateInsights = async (input) => {
   try {
     await waitIfNeeded();
 
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error("Invalid dataset");
+    // ✅ FIX 1: SUPPORT BOTH INPUT TYPES
+    let rawData = [];
+
+    if (Array.isArray(input)) {
+      rawData = input;
+    } else if (input?.cleanedData) {
+      rawData = input.cleanedData;
+    } else {
+      throw new Error("Invalid dataset format");
     }
 
     // ================= CLEAN DATA =================
-    const cleanData = data
+    const cleanData = rawData
       .map((row) => ({
         date: row.date || "unknown",
-        commodity: row.commodity || "Wheat",
-        mandi: row.mandi || "default",
+        commodity: row.commodity || "Unknown",
+        mandi: row.market || row.mandi || "default",
         arrival: Number(row.arrival) || 0,
         price: Number(row.price) || 0,
       }))
-      .filter((row) => row.arrival !== 0 || row.price !== 0)
+      .filter((row) => row.price !== 0)
       .slice(0, 100);
 
     if (cleanData.length === 0) {
@@ -105,10 +112,7 @@ export const generateInsights = async (data) => {
 
     // ================= CACHE =================
     const cacheKey = JSON.stringify(cleanData).slice(0, 300);
-
-    if (cache.has(cacheKey)) {
-      return cache.get(cacheKey);
-    }
+    if (cache.has(cacheKey)) return cache.get(cacheKey);
 
     // ================= BASIC STATS =================
     const prices = cleanData.map((r) => r.price);
@@ -122,67 +126,51 @@ export const generateInsights = async (data) => {
 
     const latest = cleanData.at(-1);
 
-    const safeAvgArrival = avgArrival || 1;
-    const safeAvgPrice = avgPrice || 1;
-
     const arrivalChange =
-      (latest.arrival - safeAvgArrival) / safeAvgArrival;
+      (latest.arrival - avgArrival) / (avgArrival || 1);
 
     const priceChange =
-      (latest.price - safeAvgPrice) / safeAvgPrice;
+      (latest.price - avgPrice) / (avgPrice || 1);
 
     let direction = "STABLE";
 
-    if (arrivalChange > 0.25 && priceChange < -0.1) {
-      direction = "DOWN";
-    } else if (arrivalChange < -0.25 && priceChange > 0.1) {
-      direction = "UP";
-    }
+    if (arrivalChange > 0.25 && priceChange < -0.1) direction = "DOWN";
+    else if (arrivalChange < -0.25 && priceChange > 0.1) direction = "UP";
 
     // ================= BASE RESPONSE =================
     let baseResponse = {
       report: {
         trend: "Stable",
         risk: "Medium",
-        summary: `Avg price ₹${avgPrice.toFixed(
-          2
-        )}, current ₹${latest.price}.`,
+        summary: `Avg price ₹${avgPrice.toFixed(2)}, current ₹${latest.price}.`,
       },
       prediction: {
         direction,
         confidence: 0.7,
       },
-      tasks: [],
-      farmer_advisory: [],
+      tasks: ["Monitor price trend closely"], // ✅ fallback always present
+      farmer_advisory: ["Avoid sudden large trades"],
     };
 
-    // ================= AI STRUCTURED ANALYSIS =================
+    // ================= AI CALL =================
     try {
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
       });
 
       const prompt = `
-You are an agricultural market intelligence system.
-
-Analyze this mandi dataset:
+Analyze mandi dataset:
 ${JSON.stringify(cleanData)}
 
-Return ONLY valid JSON:
+Return STRICT JSON ONLY:
 
 {
   "trend": "Increasing | Decreasing | Stable",
   "risk": "Low | Medium | High",
-  "summary": "2 sentence market insight",
-  "recommendations": ["actionable step"],
+  "summary": "short insight",
+  "recommendations": ["actions"],
   "advisory": ["farmer advice"]
 }
-
-Rules:
-- Keep it realistic
-- Use logical reasoning
-- No generic outputs
-- Confidence implied via clarity
 `;
 
       const result = await callWithRetry(() =>
@@ -190,6 +178,9 @@ Rules:
       );
 
       let text = result.response.text();
+
+      // ✅ FIX 2: CLEAN BAD JSON (Gemini often wraps in ```json)
+      text = text.replace(/```json|```/g, "").trim();
 
       let parsed;
       try {
@@ -201,23 +192,29 @@ Rules:
       if (parsed) {
         baseResponse = {
           report: {
-            trend: parsed.trend,
-            risk: parsed.risk,
-            summary: parsed.summary,
+            trend: parsed.trend || "Stable",
+            risk: parsed.risk || "Medium",
+            summary: parsed.summary || baseResponse.report.summary,
           },
           prediction: {
             direction,
-            confidence: 0.72,
+            confidence: 0.75, // ✅ never zero
           },
-          tasks: parsed.recommendations || [],
-          farmer_advisory: parsed.advisory || [],
+          tasks:
+            parsed.recommendations?.length > 0
+              ? parsed.recommendations
+              : baseResponse.tasks,
+          farmer_advisory:
+            parsed.advisory?.length > 0
+              ? parsed.advisory
+              : baseResponse.farmer_advisory,
         };
       }
-    } catch {
-      // fallback silently
+    } catch (err) {
+      console.warn("AI failed:", err.message);
     }
 
-    // ================= FINAL ENFORCEMENT =================
+    // ================= FINAL =================
     const finalResponse = enforceEnums(baseResponse);
 
     cache.set(cacheKey, finalResponse);
@@ -231,48 +228,53 @@ Rules:
       report: {
         trend: "Stable",
         risk: "Medium",
-        summary:
-          "Basic statistical fallback used due to system issue",
+        summary: "Fallback used due to system issue",
       },
       prediction: {
         direction: "STABLE",
         confidence: 0.65,
       },
-      tasks: ["Retry with better dataset"],
-      farmer_advisory: ["Do not rely on unstable output"],
+      tasks: ["Retry upload"],
+      farmer_advisory: ["Check dataset quality"],
     };
   }
 };
 
-// ================= CHAT =================
 export const generateChatResponse = async (data, question) => {
   try {
     await waitIfNeeded();
 
-    const cleanData = data
+    const cleanData = (data || [])
       .map((row) => ({
-        arrival: Number(row.arrival) || 0,
         price: Number(row.price) || 0,
+        arrival: Number(row.arrival) || 0,
       }))
-      .filter((r) => r.arrival !== 0 || r.price !== 0)
+      .filter((r) => r.price > 0)
       .slice(0, 50);
 
     if (cleanData.length === 0) {
-      return "No usable data found. Upload better dataset.";
+      return "No usable data available.";
     }
+
+    const avgPrice =
+      cleanData.reduce((sum, r) => sum + r.price, 0) /
+      cleanData.length;
+
+    const latest = cleanData.at(-1);
 
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
     });
 
     const prompt = `
-Data:
-${JSON.stringify(cleanData)}
+Market snapshot:
+- Avg Price: ${avgPrice.toFixed(2)}
+- Latest Price: ${latest.price}
 
-User Question:
+User question:
 ${question}
 
-Answer in 2-3 lines with clear actionable insight.
+Answer in 2–3 short lines with actionable insight.
 `;
 
     const result = await callWithRetry(() =>
@@ -281,7 +283,7 @@ Answer in 2-3 lines with clear actionable insight.
 
     return result.response.text();
 
-  } catch (error) {
-    return "System fallback: basic market insight only.";
+  } catch {
+    return "Unable to process request right now.";
   }
 };
