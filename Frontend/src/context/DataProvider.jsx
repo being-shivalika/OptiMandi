@@ -26,7 +26,12 @@ const DataProvider = ({ children }) => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+      const BASE_URL =
+        import.meta.env.VITE_BACKEND_URL || "https://optimandi.onrender.com";
+
+      if (!import.meta.env.VITE_BACKEND_URL) {
+        console.warn("⚠️ Using fallback backend URL");
+      }
 
       const res = await fetch(`${BASE_URL}/api/upload`, {
         method: "POST",
