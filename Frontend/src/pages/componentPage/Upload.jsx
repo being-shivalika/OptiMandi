@@ -17,34 +17,30 @@ const Upload = () => {
     try {
       const backendData = await uploadFile(file);
 
-      const cleanedData = backendData?.cleanedData || [];
+      // 🔴 HARD CHECK (THIS WAS MISSING)
+      if (!backendData) {
+        alert("Upload failed - no response from server");
+        return;
+      }
 
-      if (!cleanedData.length) {
+      console.log("BACKEND DATA:", backendData); // 🔥 DEBUG
+
+      const cleanedData = backendData.cleanedData;
+
+      if (!Array.isArray(cleanedData) || cleanedData.length === 0) {
         alert("No usable data found");
         return;
       }
 
-      // ❌ DO NOT PROCEED IF EMPTY
-      if (!cleanedData.length) {
-        setUploadSuccess(false);
-        alert("No usable data found in file");
-        return;
-      }
-
       setUploadSuccess(true);
+      console.log("BACKEND DATA:", backendData);
 
-      // ✔ ONLY NAVIGATE IF VALID DATA EXISTS
       setTimeout(() => {
-        navigate("/dashboard", {
-          state: {
-            data: backendData,
-          },
-        });
+        navigate("/dashboard");
       }, 1000);
     } catch (err) {
       console.error(err);
       alert("Upload failed");
-      setUploadSuccess(false);
     }
   };
 
