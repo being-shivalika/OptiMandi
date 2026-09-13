@@ -63,15 +63,14 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-bold leading-tight mt-6">
-            Optimize your Mandi
-            <br /> trade with
+            Empowering Farmers
+            <br /> & Optimizing Mandis
             <br />
-            <span className="text-green-400">Precision Intelligence.</span>
+            <span className="text-green-400">with Intelligence.</span>
           </h1>
 
           <p className="text-gray-400 mt-4 max-w-md text-sm md:text-base">
-            Track arrivals, monitor prices, and avoid losses caused by
-            oversupply — all in one place.
+            For Officials: Track arrivals and monitor prices. For Farmers: Book slots, view crop insights, and get AI advice in your native language.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -120,14 +119,14 @@ export default function LandingPage() {
               "See how prices are changing over time with simple charts.",
             ],
             [
-              "fa-algolia",
-              "Detect Oversupply",
-              "Identify when too much stock is entering the market.",
+              "fa-calendar-check",
+              "Book Mandi Slots",
+              "Farmers can book slots to sell harvest and avoid waiting.",
             ],
             [
-              "fa-newspaper",
-              "Daily Reports",
-              "Get a clear summary of price movement and market conditions.",
+              "fa-robot",
+              "Kisan Sahayak AI",
+              "Multilingual chatbot for farmers to get instant agricultural advice.",
             ],
           ].map(([icon, title, desc], i) => (
             <div

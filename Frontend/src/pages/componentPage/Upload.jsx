@@ -58,21 +58,72 @@ const Upload = () => {
       <div className="max-w-4xl mx-auto mt-10">
         {/* UPLOAD UI */}
         {!data ? (
-          <div className="flex flex-col items-center text-center mt-12">
-            <h1 className="text-3xl text-white mb-4">
-              Upload Your First Mandi Data
+          <div className="flex flex-col items-center mt-4">
+            <h1 className="text-3xl text-white font-bold mb-2">
+              Import Mandi Data
             </h1>
+            <p className="text-gray-400 mb-8 text-center max-w-lg">
+              Upload your daily APMC logs (.csv) to generate AI-driven insights, price predictions, and automated farmer advisories.
+            </p>
 
             <FileUpload onFileSelect={handleFileSelect} disabled={loading} />
             
-            <div className="mt-8 flex flex-col items-center border-t border-gray-700 pt-8 w-full max-w-md">
-              <p className="text-gray-400 mb-4 text-sm">Or explore the app with sample data</p>
+            <div className="mt-8 flex flex-col items-center border-t border-green-900/50 pt-8 w-full max-w-md">
+              <p className="text-gray-400 mb-4 text-sm">No CSV file right now? Use our test dataset.</p>
               <button 
                 onClick={handleDemoData}
-                className="bg-gray-800 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium border border-gray-600 transition-colors w-full"
+                className="bg-[#0a1f1a] hover:bg-[#112B24] text-green-400 px-6 py-3 rounded-xl font-bold border border-green-900/50 transition-colors w-full flex items-center justify-center gap-2"
               >
-                Explore Demo Mode
+                <i className="fa-solid fa-flask"></i> Load Demo Dataset
               </button>
+            </div>
+
+            <div className="mt-12 bg-[#112B24] p-6 rounded-xl border border-green-900/30 w-full max-w-2xl text-left">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-white font-bold flex items-center gap-2">
+                  <i className="fa-solid fa-circle-info text-[#E67E22]"></i> CSV File Requirements
+                </h3>
+                <button className="text-xs bg-[#0a1f1a] text-green-400 px-3 py-1 rounded border border-green-900/50 hover:bg-[#153b31] transition-colors">
+                  <i className="fa-solid fa-download mr-1"></i> Download Template
+                </button>
+              </div>
+              <ul className="text-gray-400 text-sm mb-4 space-y-2 list-disc pl-5">
+                <li>File must be in <strong>.csv</strong> format (Max size: 50MB).</li>
+                <li>Ensure there are no blank rows or corrupted characters.</li>
+                <li>The AI engine strictly requires the following exact column headers to generate valid predictions and tasks.</li>
+              </ul>
+              <div className="overflow-x-auto rounded-lg border border-green-900/30">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#0a1f1a] text-gray-400">
+                    <tr>
+                      <th className="px-3 py-2">Date</th>
+                      <th className="px-3 py-2">Mandi</th>
+                      <th className="px-3 py-2">Commodity</th>
+                      <th className="px-3 py-2">Min Price</th>
+                      <th className="px-3 py-2">Max Price</th>
+                      <th className="px-3 py-2">Modal Price</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-300 divide-y divide-green-900/30">
+                    <tr>
+                      <td className="px-3 py-2 font-mono">2023-10-12</td>
+                      <td className="px-3 py-2">Indore</td>
+                      <td className="px-3 py-2">Wheat</td>
+                      <td className="px-3 py-2">2100</td>
+                      <td className="px-3 py-2">2400</td>
+                      <td className="px-3 py-2">2250</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 font-mono">2023-10-12</td>
+                      <td className="px-3 py-2">Ujjain</td>
+                      <td className="px-3 py-2">Soybean</td>
+                      <td className="px-3 py-2">4200</td>
+                      <td className="px-3 py-2">4600</td>
+                      <td className="px-3 py-2">4450</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ) : (

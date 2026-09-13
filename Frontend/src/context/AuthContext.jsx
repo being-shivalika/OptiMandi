@@ -6,7 +6,8 @@ import { toast } from "react-toastify";
 export const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  const backendURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+  // Dynamically switch backend URL based on environment
+  const backendURL = import.meta.env.VITE_BACKEND_URL || (window.location.hostname === "localhost" ? "http://localhost:8080" : "https://optimandi-1.onrender.com");
 
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserData] = useState(null);

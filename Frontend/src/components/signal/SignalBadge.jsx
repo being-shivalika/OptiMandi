@@ -24,7 +24,8 @@ const SignalBadge = ({ signal }) => {
     },
   };
 
-  const style = config[signal.action] || config.hold;
+  const actionString = signal.action ? String(signal.action).toLowerCase() : 'hold';
+  const style = config[actionString] || config.hold;
 
   return (
     <div
@@ -36,11 +37,11 @@ const SignalBadge = ({ signal }) => {
         </p>
 
         <h2 className={`text-2xl font-bold ${style.text}`}>
-          {signal.action.toUpperCase()}
+          {actionString.toUpperCase()}
         </h2>
 
         <p className="text-sm text-gray-400 mt-1">
-          Confidence: {signal.confidence}
+          Confidence: {signal.confidence || "N/A"}
         </p>
       </div>
 

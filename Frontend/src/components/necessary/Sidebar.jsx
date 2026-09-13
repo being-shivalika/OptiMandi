@@ -56,14 +56,14 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         </NavLink>
 
         <NavLink
-          to="/compare"
+          to="/manage-slots"
           onClick={() => setIsOpen(false)}
           className={({ isActive }) =>
             `${linkStyle} ${isActive ? activeStyle : ""}`
           }
         >
-          <i className="fa-solid fa-scale-balanced"></i>
-          Compare Markets
+          <i className="fa-solid fa-users-gear"></i>
+          Manage Slots
         </NavLink>
 
         <NavLink

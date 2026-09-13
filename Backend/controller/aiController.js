@@ -67,3 +67,31 @@ export const analyzeWithPrompt = async (req, res) => {
     });
   }
 };
+
+export const farmerChat = async (req, res) => {
+  try {
+    const { question, language = "English" } = req.body;
+
+    if (!question) {
+      return res.status(400).json({ success: false, message: "Question is required." });
+    }
+
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const prompt = `You are a helpful agricultural advisor for Indian farmers. 
+Please answer the following question clearly and concisely.
+IMPORTANT: You MUST answer strictly in the ${language} language.
+
+Farmer's Question: ${question}`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+
+    res.status(200).json({ success: true, answer: text });
+  } catch (error) {
+    console.error("farmerChat error:", error);
+    res.status(500).json({ success: false, message: "Chatbot failed." });
+  }
+};

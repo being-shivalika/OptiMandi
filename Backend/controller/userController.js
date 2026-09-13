@@ -16,8 +16,10 @@ export const getUserData = async (req, res) => {
     res.status(200).json({
       success: true,
       user: {
+        id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
 

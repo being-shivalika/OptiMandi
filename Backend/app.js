@@ -24,7 +24,8 @@ app.use(express.json());
 const allowedOrigins = [
   "http://localhost:5173",
   "https://opti-mandi.vercel.app",
-  "https://opti-mandi-knsceob60-shivalika-mehras-projects.vercel.app"
+  "https://opti-mandi-knsceob60-shivalika-mehras-projects.vercel.app",
+  "https://opti-mandi-9e291pwkc-shivalika-mehras-projects.vercel.app"
 ];
 
 app.use(
@@ -33,7 +34,12 @@ app.use(
       // allow Postman / server calls
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
+      if (
+          allowedOrigins.includes(origin) || 
+          origin.startsWith("http://localhost:") || 
+          origin.startsWith("http://127.0.0.1:") ||
+          origin.endsWith(".vercel.app") // Catch-all for any Vercel preview branch
+      ) {
         return callback(null, true);
       }
 
@@ -48,7 +54,12 @@ app.use(
 app.options(/.*/, cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
+    if (
+        allowedOrigins.includes(origin) || 
+        origin.startsWith("http://localhost:") || 
+        origin.startsWith("http://127.0.0.1:") ||
+        origin.endsWith(".vercel.app")
+    ) {
       return callback(null, true);
     }
     return callback(null, false);
@@ -56,6 +67,8 @@ app.options(/.*/, cors({
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 }));
+
+import bookingRouter from "./routes/bookingRoutes.js";
 
 // ---------------- ROUTES ----------------
 app.get("/", (req, res) => {
@@ -65,6 +78,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api", uploadRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/bookings", bookingRouter);
 
 // ---------------- START SERVER ----------------
 app.listen(PORT, () => {

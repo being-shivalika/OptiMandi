@@ -1,7 +1,8 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataContext } from "../context/DataContext";
 import { AuthContext } from "../context/AuthContext";
+import axios from 'axios';
 import Layout from "./componentPage/Layout";
 
 import SummaryCard from "../components/summary/SummaryCard";
@@ -12,13 +13,32 @@ import PriceChart from "../components/charts/PriceChart";
 
 const Dashboard = () => {
   const { data, savedMarkets, priceAlerts, removePriceAlert } = useContext(DataContext);
-  const { userData, getUserData } = useContext(AuthContext);
+  const { userData, backendURL } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [slots, setSlots] = useState([]);
 
   useEffect(() => {
-    getUserData();
-  }, []);
+    if (userData?.role === 'FARMER') {
+      navigate('/farmer-dashboard');
+    } else if (userData?.role === 'OFFICIAL') {
+      fetchSlots();
+    }
+  }, [userData]);
 
+  const fetchSlots = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const { data } = await axios.get(`${backendURL}/api/bookings/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (data.success) {
+        setSlots(data.bookings);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const cleanedData = data?.cleanedData || [];
   const report = data?.report || null;
   const isDemo = data?.isDemo || false;
@@ -91,11 +111,102 @@ const Dashboard = () => {
           </div>
         )}
 
+        {/* OFFICIALS SPECIFIC SECTIONS: Always visible regardless of data upload */}
+        {userData?.role === 'OFFICIAL' && (
+          <div className="space-y-8 mb-8">
+            
+            {/* Active Broadcasts */}
+            <section>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <i className="fa-solid fa-bullhorn text-[#E67E22]"></i> Active Broadcasts to Farmers
+                  </h3>
+                  <button className="text-sm text-green-400 hover:underline">
+                    + New Broadcast
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-[#112B24] p-4 rounded-xl border-l-4 border-[#E67E22]">
+                        <h4 className="font-bold text-white">Rabi Harvest Procurement Starts</h4>
+                        <p className="text-sm text-gray-400 mt-1">Live in all districts. Farmers are being advised to book slots.</p>
+                        <p className="text-xs text-gray-500 mt-2">Issued: 2 days ago</p>
+                    </div>
+                    <div className="bg-[#112B24] p-4 rounded-xl border-l-4 border-green-500">
+                        <h4 className="font-bold text-white">Weather Advisory: Heavy Rain</h4>
+                        <p className="text-sm text-gray-400 mt-1">Targeted to Malwa region. Advising safe storage of soybean.</p>
+                        <p className="text-xs text-gray-500 mt-2">Issued: Today</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Slot Management for Officials */}
+            <section>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <i className="fa-solid fa-truck-field text-[#E67E22]"></i> Automated Slot Assignments
+                  </h3>
+                  <button onClick={fetchSlots} className="text-sm text-green-400 hover:underline">
+                    <i className="fa-solid fa-rotate-right"></i> Refresh
+                  </button>
+                </div>
+                
+                <div className="bg-[#112B24] rounded-xl border border-green-900/30 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-[#0a1f1a] text-green-400">
+                                <tr>
+                                    <th className="px-4 py-3 border-b border-green-900/50">Token</th>
+                                    <th className="px-4 py-3 border-b border-green-900/50">Farmer</th>
+                                    <th className="px-4 py-3 border-b border-green-900/50">Mandi Location</th>
+                                    <th className="px-4 py-3 border-b border-green-900/50">Crop (Qty)</th>
+                                    <th className="px-4 py-3 border-b border-green-900/50">Allotted Slot</th>
+                                    <th className="px-4 py-3 border-b border-green-900/50">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-gray-300 divide-y divide-green-900/30">
+                                {(slots.length > 0 ? slots : [
+                                    { _id: 'd1', tokenNumber: 'OPT-48291', farmerName: 'Ramesh Patel', district: 'Indore', commodity: 'Wheat', quantity: 50, allottedDate: '2023-11-15', allottedTime: 'Morning', status: 'APPROVED' },
+                                    { _id: 'd2', tokenNumber: 'OPT-19283', farmerName: 'Suresh Kumar', district: 'Ujjain', commodity: 'Soybean', quantity: 120, allottedDate: '2023-11-15', allottedTime: 'Afternoon', status: 'PENDING' },
+                                    { _id: 'd3', tokenNumber: 'OPT-57211', farmerName: 'Anil Sharma', district: 'Bhopal', commodity: 'Mustard', quantity: 30, allottedDate: '2023-11-16', allottedTime: 'Morning', status: 'APPROVED' }
+                                ]).slice(0, 10).map(slot => (
+                                    <tr key={slot._id} className="hover:bg-[#0a1f1a]/50 transition-colors">
+                                        <td className="px-4 py-3 font-mono text-green-400">{slot.tokenNumber || '---'}</td>
+                                        <td className="px-4 py-3 font-semibold text-white">{slot.farmerName}</td>
+                                        <td className="px-4 py-3">
+                                            <i className="fa-solid fa-location-dot text-gray-500 mr-1"></i>
+                                            {slot.district || slot.mandiName} APMC
+                                        </td>
+                                        <td className="px-4 py-3">{slot.commodity} ({slot.quantity || 0} Qtl)</td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex flex-col">
+                                                <span className="text-white">{slot.allottedDate || slot.date}</span>
+                                                <span className="text-xs text-[#E67E22]">{slot.allottedTime || slot.slotTime}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded-md text-xs font-bold">
+                                                {slot.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {slots.length > 10 && (
+                            <div className="p-3 bg-[#0a1f1a] text-center border-t border-green-900/30">
+                                <span className="text-xs text-gray-500">Showing 10 most recent slots. View all →</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
+          </div>
+        )}
+
         {/* DATA STATE */}
         {!isEmpty && (
           <div className="space-y-8">
-            
-            {/* SAVED MARKETS QUICK VIEW */}
+
             {savedMarketsData.length > 0 && (
               <section className="mb-8">
                 <h3 className="text-lg font-semibold text-white mb-4">Your Saved Markets</h3>

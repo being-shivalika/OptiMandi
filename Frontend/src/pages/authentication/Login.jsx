@@ -40,7 +40,11 @@ const Login = () => {
 
         toast.success("Welcome back!");
 
-        navigate("/dashboard");
+        if (data.user.role === 'FARMER') {
+          navigate("/farmer-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         toast.error(data.message || "Login failed");
       }

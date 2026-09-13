@@ -13,6 +13,7 @@ const Signup = () => {
   const [name, setname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("FARMER");
   const [loading, setLoading] = useState(false);
 
   const SubmitRegiter = async (e) => {
@@ -32,6 +33,7 @@ const Signup = () => {
           name: name.trim(),
           email: email.trim(),
           password,
+          role,
         },
         {
           withCredentials: true,
@@ -47,7 +49,12 @@ const Signup = () => {
         }, 50);
 
         toast.success("Account created!");
-        navigate("/dashboard");
+        
+        if (role === 'FARMER') {
+          navigate("/farmer-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         toast.error(data.message || "Signup failed");
       }
@@ -141,6 +148,35 @@ const Signup = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+            </div>
+
+            {/* ROLE */}
+            <div className="mb-6">
+              <label className="text-xs font-bold mb-2 block">I am a:</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="FARMER"
+                    checked={role === "FARMER"}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="accent-green-600 w-4 h-4"
+                  />
+                  <span className="text-sm">Farmer</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="OFFICIAL"
+                    checked={role === "OFFICIAL"}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="accent-green-600 w-4 h-4"
+                  />
+                  <span className="text-sm">Mandi Official</span>
+                </label>
+              </div>
             </div>
 
             {/* BUTTON */}
