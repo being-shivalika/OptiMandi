@@ -13,17 +13,19 @@ const Signup = () => {
   const [name, setname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const SubmitRegiter = async (e) => {
     e.preventDefault();
+    if (loading) return;
 
-    // 🔴 DEBUG SAFETY (IMPORTANT)
     if (!backendURL) {
       toast.error("Backend URL is missing (env issue)");
       return;
     }
 
     try {
+      setLoading(true);
       const { data } = await axios.post(
         `${backendURL}/api/auth/register`,
         {
@@ -37,12 +39,9 @@ const Signup = () => {
       );
 
       if (data.success) {
-        // store token
         localStorage.setItem("token", data.token);
-
         setIsLoggedin(true);
 
-        // ensure token is available before API call
         setTimeout(() => {
           getUserData();
         }, 50);
@@ -53,8 +52,9 @@ const Signup = () => {
         toast.error(data.message || "Signup failed");
       }
     } catch (err) {
-      console.log("SIGNUP ERROR:", err.response?.data || err.message);
-      toast.error(err.response?.data?.message || "Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed due to a network error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,9 +146,10 @@ const Signup = () => {
             {/* BUTTON */}
             <button
               type="submit"
-              className="w-full h-12 bg-orange-500 text-white rounded-xl font-bold hover:scale-105 transition"
+              disabled={loading}
+              className="w-full h-12 bg-orange-500 text-white rounded-xl font-bold hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              SIGN UP
+              {loading ? "SIGNING UP..." : "SIGN UP"}
             </button>
 
             <p className="text-sm text-center mt-4">

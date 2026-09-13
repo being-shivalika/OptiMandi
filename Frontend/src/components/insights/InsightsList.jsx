@@ -26,6 +26,10 @@ const InsightsList = ({ insights }) => {
           </li>
         ))}
       </ul>
+      
+      <p className="text-gray-500 text-[10px] mt-4 italic">
+        * AI Insights are generated based on patterns in your provided data. Do not treat as guaranteed outcomes.
+      </p>
     </div>
   );
 };

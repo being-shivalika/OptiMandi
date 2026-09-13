@@ -31,6 +31,14 @@ export const registerUser = async (req, res) => {
       password: passwordHash,
     });
 
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is missing from environment variables");
+      return res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+    }
+
     const token = jwt.sign(
       { id: newUser._id },
       process.env.JWT_SECRET,
@@ -48,10 +56,10 @@ export const registerUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("registerUser error:", error);
+    console.error("registerUser error:", error.message || error);
     return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: "Server error during registration",
     });
   }
 };
@@ -86,6 +94,14 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is missing from environment variables");
+      return res.status(500).json({
+        success: false,
+        message: "Server configuration error",
+      });
+    }
+
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
@@ -103,10 +119,10 @@ export const loginUser = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("loginUser error:", error);
+    console.error("loginUser error:", error.message || error);
     return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: "Server error during login",
     });
   }
 };

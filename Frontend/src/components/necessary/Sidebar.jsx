@@ -56,6 +56,17 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         </NavLink>
 
         <NavLink
+          to="/compare"
+          onClick={() => setIsOpen(false)}
+          className={({ isActive }) =>
+            `${linkStyle} ${isActive ? activeStyle : ""}`
+          }
+        >
+          <i className="fa-solid fa-scale-balanced"></i>
+          Compare Markets
+        </NavLink>
+
+        <NavLink
           to="/reports"
           onClick={() => setIsOpen(false)}
           className={({ isActive }) =>

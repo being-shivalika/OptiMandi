@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
 // ================= RATE CONTROL =================
 let lastCallTime = 0;
@@ -154,6 +154,10 @@ export const generateInsights = async (input) => {
 
     // ================= AI CALL =================
     try {
+      if (!genAI) {
+        throw new Error("GEMINI_API_KEY is not configured.");
+      }
+
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash",
       });
@@ -261,6 +265,10 @@ export const generateChatResponse = async (data, question) => {
       cleanData.length;
 
     const latest = cleanData.at(-1);
+
+    if (!genAI) {
+      return "AI service is currently unavailable (API key missing).";
+    }
 
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",

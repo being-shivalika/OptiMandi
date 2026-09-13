@@ -110,24 +110,41 @@ const PriceChart = ({ data }) => {
       </div>
 
       {/* INSIGHTS */}
-      <div className="bg-[#0a1f1a] p-4 rounded-xl border border-green-900/30">
-        <h4 className="text-sm text-green-400 mb-2">Key Observations</h4>
-
-        <ul className="text-sm text-gray-300 space-y-1">
-          {filteredData.filter((d) => d.spike).length > 0 ? (
-            filteredData
-              .filter((d) => d.spike)
-              .map((d, i) => (
-                <li key={i}>
-                  ⚡ {d.date}: {d.change}% price movement detected
-                </li>
-              ))
+      <div className="bg-[#0a1f1a] p-4 rounded-xl border border-green-900/30 flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <h4 className="text-sm text-green-400 mb-2 font-bold">7-Day Analysis</h4>
+          {filteredData.length > 1 ? (
+            <p className="text-sm text-white">
+              Trend: <span className={filteredData[filteredData.length - 1].price >= filteredData[0].price ? 'text-green-500' : 'text-red-500'}>
+                {(((filteredData[filteredData.length - 1].price - filteredData[0].price) / filteredData[0].price) * 100).toFixed(1)}%
+              </span>
+              <span className="text-gray-400 ml-2">
+                (₹{filteredData[0].price} → ₹{filteredData[filteredData.length - 1].price})
+              </span>
+            </p>
           ) : (
-            <li className="text-gray-500 italic">
-              No significant spikes detected
-            </li>
+            <p className="text-sm text-gray-500">Not enough data for trend.</p>
           )}
-        </ul>
+        </div>
+        
+        <div className="flex-1 border-t md:border-t-0 md:border-l border-green-900/30 md:pl-4 pt-4 md:pt-0">
+          <h4 className="text-sm text-green-400 mb-2 font-bold">Volatility Alerts</h4>
+          <ul className="text-sm text-gray-300 space-y-1">
+            {filteredData.filter((d) => d.spike).length > 0 ? (
+              filteredData
+                .filter((d) => d.spike)
+                .map((d, i) => (
+                  <li key={i} className="text-orange-400">
+                    ⚠ {d.date}: {d.change > 0 ? '+' : ''}{d.change}% price movement detected
+                  </li>
+                ))
+            ) : (
+              <li className="text-gray-500 italic">
+                Normal volatility. No significant spikes.
+              </li>
+            )}
+          </ul>
+        </div>
       </div>
     </div>
   );

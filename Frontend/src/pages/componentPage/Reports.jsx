@@ -59,9 +59,9 @@ export default function Reports() {
             <p className="text-xs text-gray-400">Risk</p>
             <p
               className={`text-lg font-bold ${
-                report.risk === "HIGH"
+                report.risk?.toUpperCase() === "HIGH"
                   ? "text-red-500"
-                  : report.risk === "MEDIUM"
+                  : report.risk?.toUpperCase() === "MEDIUM"
                     ? "text-yellow-500"
                     : "text-green-500"
               }`}

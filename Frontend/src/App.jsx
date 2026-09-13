@@ -5,6 +5,7 @@ import UploadPage from "./pages/componentPage/Upload";
 import Reports from "./pages/componentPage/Reports";
 import Tasks from "./pages/componentPage/Tasks";
 import Predictions from "./pages/componentPage/Prediction";
+import MarketComparison from "./pages/componentPage/MarketComparison";
 import Login from "./pages/authentication/Login";
 import Signup from "./pages/authentication/Signup";
 
@@ -20,6 +21,7 @@ function App() {
         <Route path="/reports" element={<Reports />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/predictions" element={<Predictions />} />
+        <Route path="/compare" element={<MarketComparison />} />
       </Routes>
     </BrowserRouter>
   );

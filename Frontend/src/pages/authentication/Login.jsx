@@ -11,10 +11,19 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    if (loading) return;
+
+    if (!backendURL) {
+      toast.error("Backend URL is not configured.");
+      return;
+    }
+
     try {
+      setLoading(true);
       axios.defaults.withCredentials = true;
 
       const { data } = await axios.post(`${backendURL}/api/auth/login`, {
@@ -23,22 +32,22 @@ const Login = () => {
       });
 
       if (data.success) {
-        // 🔥 THIS WAS MISSING
         localStorage.setItem("token", data.token);
 
         setIsLoggedin(true);
 
-        // 🔥 now this will work correctly
         await getUserData();
 
         toast.success("Welcome back!");
 
         navigate("/dashboard");
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Login failed");
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed");
+      toast.error(err.response?.data?.message || "Login failed due to a network error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,10 +136,11 @@ text-[#4cd497]  transition-all duration-500 rounded-r-full top-40 h-12"
               </Link>
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full h-12  bg-[#f39b03]
-hover:bg-[#fc940d] rounded-xl font-bold text-white shadow-lg mt-4 hover:scale-105 hover:border "
+hover:bg-[#fc940d] rounded-xl font-bold text-white shadow-lg mt-4 hover:scale-105 hover:border disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                SIGN IN
+                {loading ? "SIGNING IN..." : "SIGN IN"}
               </button>
               <p className="text-sm text-slate-500 text-center mt-5">
                 Don't have an account?{" "}

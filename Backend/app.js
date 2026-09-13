@@ -33,11 +33,10 @@ app.use(
       // allow Postman / server calls
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
         return callback(null, true);
       }
 
-      // instead of crashing → just block silently
       return callback(null, false);
     },
     credentials: true,
@@ -45,8 +44,18 @@ app.use(
   })
 );
 
-// IMPORTANT: preflight handling (Express 5 safe way)
-app.options(/.*/, cors());
+// IMPORTANT: preflight handling
+app.options(/.*/, cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+}));
 
 // ---------------- ROUTES ----------------
 app.get("/", (req, res) => {

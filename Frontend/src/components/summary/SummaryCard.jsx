@@ -38,6 +38,10 @@ const SummaryCard = ({ summary }) => {
           <p className="text-white text-lg font-semibold">--</p>
         </div>
       </div>
+      
+      <p className="text-gray-500 text-[10px] mt-4 border-t border-gray-700 pt-2">
+        * Market summary is based on available historical data. Actual future prices and market conditions may vary.
+      </p>
     </div>
   );
 };
