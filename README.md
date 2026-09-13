@@ -1,5 +1,7 @@
 # 🌾 OptiMandi – AI-Powered Agricultural Market Intelligence System
 
+🔗 **Live Demo:** [https://opti-mandi.vercel.app/](https://opti-mandi.vercel.app/)
+
 ## Project Overview
 OptiMandi is an AI-driven decision support system designed to optimize agricultural mandi (market) operations by transforming unstructured data into structured, actionable insights. It helps officials make faster and more accurate decisions regarding procurement, storage, and distribution using AI-based analysis.
 
