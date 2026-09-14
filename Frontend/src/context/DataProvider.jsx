@@ -47,7 +47,10 @@ const DataProvider = ({ children }) => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://optimandi.onrender.com";
+      let BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://optimandi-1.onrender.com";
+      if (BASE_URL === "https://optimandi.onrender.com") {
+        BASE_URL = "https://optimandi-1.onrender.com";
+      }
 
       const res = await fetch(`${BASE_URL}/api/upload`, {
         method: "POST",

@@ -6,8 +6,11 @@ import { toast } from "react-toastify";
 export const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  // Dynamically switch backend URL based on environment
-  const backendURL = import.meta.env.VITE_BACKEND_URL || (window.location.hostname === "localhost" ? "http://localhost:8080" : "https://optimandi-1.onrender.com");
+  // Force the correct backend URL (overriding Vercel's env variable if it has the old URL)
+  let backendURL = import.meta.env.VITE_BACKEND_URL || (window.location.hostname === "localhost" ? "http://localhost:8080" : "https://optimandi-1.onrender.com");
+  if (backendURL === "https://optimandi.onrender.com") {
+    backendURL = "https://optimandi-1.onrender.com";
+  }
 
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserData] = useState(null);
