@@ -163,15 +163,21 @@ const ManageSlots = () => {
                             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                                 <i className="fa-solid fa-triangle-exclamation text-red-400"></i> Slot Complaints
                             </h3>
-                            <div className="space-y-3">
-                                <div className="bg-[#0a1f1a] p-3 rounded-lg border-l-2 border-red-500">
-                                    <p className="text-sm text-gray-200">"My token OPT-38291 wasn't scanning at Gate 2 yesterday morning."</p>
-                                    <span className="text-[10px] text-gray-500 mt-2 block">- Farmer Ramesh (Indore)</span>
-                                </div>
-                                <div className="bg-[#0a1f1a] p-3 rounded-lg border-l-2 border-yellow-500">
-                                    <p className="text-sm text-gray-200">"Tractors taking too long to weigh, my afternoon slot was delayed by 3 hours."</p>
-                                    <span className="text-[10px] text-gray-500 mt-2 block">- Farmer Suresh (Ujjain)</span>
-                                </div>
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                                {(() => {
+                                    const stored = JSON.parse(localStorage.getItem('farmerComplaints')) || [
+                                        { id: 1, text: "My token OPT-38291 wasn't scanning at Gate 2 yesterday morning.", author: "Farmer Ramesh (Indore)", type: "red" },
+                                        { id: 2, text: "Tractors taking too long to weigh, my afternoon slot was delayed by 3 hours.", author: "Farmer Suresh (Ujjain)", type: "yellow" }
+                                    ];
+                                    return stored.length > 0 ? stored.map(c => (
+                                        <div key={c.id} className={`bg-[#0a1f1a] p-3 rounded-lg border-l-2 ${c.type === 'red' ? 'border-red-500' : 'border-yellow-500'}`}>
+                                            <p className="text-sm text-gray-200">"{c.text}"</p>
+                                            <span className="text-[10px] text-gray-500 mt-2 block">- {c.author}</span>
+                                        </div>
+                                    )) : (
+                                        <p className="text-sm text-gray-500 italic">No complaints filed.</p>
+                                    );
+                                })()}
                             </div>
                             <button className="w-full mt-4 bg-transparent border border-gray-600 text-gray-300 hover:text-white hover:border-gray-400 py-2 rounded-lg text-sm transition-colors">
                                 View All Complaints

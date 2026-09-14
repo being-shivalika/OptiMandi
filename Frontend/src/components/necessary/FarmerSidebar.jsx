@@ -10,6 +10,7 @@ const FarmerSidebar = () => {
   const navItems = [
     { name: "Mandi Updates", path: "/farmer-dashboard", icon: "fa-bullhorn" },
     { name: "Book a Slot", path: "/farmer-slots", icon: "fa-calendar-check" },
+    { name: "Submit Complaint", path: "/farmer-complaints", icon: "fa-envelope-open-text" },
     { name: "Kisan Sahayak (AI)", path: "/farmer-chat", icon: "fa-robot" },
   ];
 

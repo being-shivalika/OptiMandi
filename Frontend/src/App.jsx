@@ -11,6 +11,7 @@ import Signup from "./pages/authentication/Signup";
 import FarmerDashboard from "./pages/componentPage/FarmerDashboard";
 import FarmerSlots from "./pages/componentPage/FarmerSlots";
 import FarmerChat from "./pages/componentPage/FarmerChat";
+import FarmerComplaints from "./pages/componentPage/FarmerComplaints";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -25,6 +26,7 @@ function App() {
         <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
         <Route path="/farmer-slots" element={<FarmerSlots />} />
         <Route path="/farmer-chat" element={<FarmerChat />} />
+        <Route path="/farmer-complaints" element={<FarmerComplaints />} />
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/tasks" element={<Tasks />} />
